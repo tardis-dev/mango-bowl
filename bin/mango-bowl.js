@@ -84,15 +84,18 @@ async function start() {
 
   logger.log('info', 'Starting mango-bowl server with options', options)
 
+  const startTimestamp = new Date().valueOf()
+
   await bootServer({
     ...options,
     markets
   })
+  const bootTimeSeconds = Math.ceil((new Date().valueOf() - startTimestamp) / 1000)
 
   if (isDocker()) {
-    logger.log('info', `Mango-bowl v${pkg.version} is running inside Docker container.`)
+    logger.log('info', `Mango-bowl v${pkg.version} is running inside Docker container.`, { bootTimeSeconds })
   } else {
-    logger.log('info', `Mango-bowl server v${pkg.version} is running on port ${port}.`)
+    logger.log('info', `Mango-bowl server v${pkg.version} is running on port ${port}.`, { bootTimeSeconds })
   }
 
   logger.log('info', `See https://github.com/tardis-dev/mango-bowl for more information.`)

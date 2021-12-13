@@ -1,11 +1,5 @@
 import { Op, Channel, MessageType } from './consts'
 
-export type EventQueueHeader = {
-  seqNum: number
-  head: number
-  count: number
-}
-
 export type SubRequest = {
   readonly op: Op
   readonly channel: Channel
@@ -54,7 +48,11 @@ export interface Quote extends DataMessage {
   readonly bestBid: PriceLevel | undefined
 }
 
-export interface Trade extends DataMessage {
+export interface WithEventTimestamp {
+  readonly eventTimestamp: string
+}
+
+export interface Trade extends DataMessage, WithEventTimestamp {
   readonly type: 'trade'
   readonly price: string
   readonly size: string
@@ -76,8 +74,7 @@ export type OrderItem = {
   readonly clientId: string
   readonly account: string
   readonly accountSlot: number
-  readonly feeTier: number
-}
+} & WithEventTimestamp
 
 export interface Open extends DataMessage, OrderItem {
   readonly type: 'open'
@@ -94,7 +91,7 @@ export interface Done extends DataMessage {
   readonly accountSlot: number
 }
 
-export interface Change extends DataMessage, OrderItem {
+export interface Change extends DataMessage, Omit<OrderItem, 'eventTimestamp'> {
   readonly type: 'change'
 }
 

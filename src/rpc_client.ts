@@ -547,7 +547,7 @@ class AccountsChangeNotifications {
   }
 
   private _restartPublishTimer() {
-    // wait up to 10s for remaining accounts notifications
+    // wait up to 2s for remaining accounts notifications
     // this handles scenario when there was for example only 'asks' account notification
     // for a given slot so we still wait for remaining accounts notifications and there is no changes
     // for next slots for tracked accounts
@@ -560,7 +560,7 @@ class AccountsChangeNotifications {
 
     this._publishTID = setTimeout(() => {
       this._publish()
-    }, 10 * 1000)
+    }, 2 * 1000)
   }
 
   private _receivedDataForAllAccounts() {

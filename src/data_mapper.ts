@@ -104,9 +104,9 @@ export class DataMapper {
         : this._bidsAccountOrders
 
     if (this._initialized && accountsData.eventQueue !== undefined) {
+      const doneMessages: Done[] = []
       for (const event of this._getNewlyAddedEvents(accountsData.eventQueue)) {
         for (const item of this._mapEventToDataMessages(event, timestamp, slot)!) {
-          let pushedItem = false
           if (item.type === 'fill' && item.maker === true) {
             // for maker fills check first if there's existing open order for it
             // as it may not exist in scenario where order was added to the order book and matched in the same slot
@@ -143,12 +143,10 @@ export class DataMapper {
                   size: makerFill.size,
                   account: makerFill.account,
                   accountSlot: makerFill.accountSlot,
-                  eventTimestamp: makerFill.timestamp
+                  eventTimestamp: makerFill.eventTimestamp
                 }
 
                 l3Diff.push(openMessage)
-                l3Diff.push(item)
-                pushedItem = true
 
                 const doneMessage: Done = {
                   type: 'done',
@@ -165,15 +163,17 @@ export class DataMapper {
                   sizeRemaining: undefined
                 }
 
-                l3Diff.push(doneMessage)
+                doneMessages.push(doneMessage)
               }
             }
           }
 
-          if (pushedItem === false) {
-            l3Diff.push(item)
-          }
+          l3Diff.push(item)
         }
+      }
+
+      for (const doneMessage of doneMessages) {
+        l3Diff.push(doneMessage)
       }
     }
 

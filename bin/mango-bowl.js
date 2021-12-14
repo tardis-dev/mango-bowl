@@ -2,11 +2,10 @@
 
 const yargs = require('yargs')
 const isDocker = require('is-docker')
-const { Config } = require('@blockworks-foundation/mango-client')
 const pkg = require('../package.json')
 
 const DEFAULT_PORT = 8010
-const DEFAULT_NODE_ENDPOINT = Config.ids().cluster_urls['mainnet']
+const DEFAULT_NODE_ENDPOINT = 'https://solana-api.projectserum.com'
 
 const argv = yargs
   .scriptName('mango-bowl')

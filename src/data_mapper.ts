@@ -231,6 +231,7 @@ export class DataMapper {
           bidsAccountExists: accountsData.bids !== undefined,
           eventQueueAccountExists: accountsData.eventQueue !== undefined,
           slot,
+          l3DiffLength: l3Diff.length,
           l3Diff
         })
 

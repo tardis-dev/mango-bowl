@@ -177,9 +177,9 @@ class Minion {
                 programId: market.programId,
                 tickSize: perpMarket.tickSize,
                 minOrderSize: perpMarket.minOrderSize,
-                takerFee: info.takerFee.toString(),
-                makerFee: info.makerFee.toString(),
-                liquidationFee: info.liquidationFee.toString()
+                takerFee: info.takerFee.toFixed(5),
+                makerFee: info.makerFee.toFixed(5),
+                liquidationFee: info.liquidationFee.toFixed(5)
               }
 
               return marketInfo

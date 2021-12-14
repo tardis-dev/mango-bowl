@@ -1,7 +1,7 @@
 <img src="https://raw.githubusercontent.com/tardis-dev/mango-bowl/master/logo.svg">
 
-[![Version](https://img.shields.io/npm/v/mango-bowl.svg?color=05aac5)](https://www.npmjs.org/package/mango-bowl)
-[![Docker version](https://img.shields.io/docker/v/tardisdev/mango-bowl/latest?label=Docker&color=05aac5)](https://hub.docker.com/r/tardisdev/mango-bowl)
+[![Version](https://img.shields.io/npm/v/mango-bowl.svg?color=7ac401)](https://www.npmjs.org/package/mango-bowl)
+[![Docker version](https://img.shields.io/docker/v/tardisdev/mango-bowl/latest?label=Docker&color=7ac401)](https://hub.docker.com/r/tardisdev/mango-bowl)
 
 # mango-bowl: real-time WS market data API for Mango DEX
 

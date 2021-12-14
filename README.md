@@ -182,7 +182,7 @@ WebSocket API provides real-time market data feeds of Mango Markets DEX and uses
 
 - **[ws://localhost:8010/v1/ws](ws://localhost:8010/v1/ws)** - assuming mango-bowl runs locally on default port without SSL enabled
 
-- **[wss://api.mango-bowl.dev/v1/ws](wss://api.mango-bowl.dev/v1/ws)** - demo mango-bowl server endpoint
+- **[wss://api.mango-bowl.com/v1/ws](wss://api.mango-bowl.com/v1/ws)** - demo mango-bowl server endpoint
 
 <br/>
 
@@ -324,14 +324,577 @@ Markets supported by mango-bowl server can be queried via [`GET /markets`](#get-
 
 - `type` is determining message's data type so it can be handled appropriately
 
-- `timestamp` when message has been received from node RPC API in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format with milliseconds, for example: "2021-12-14T07:03:03.994Z"
+- `timestamp` when message has been received from node RPC API by mango-bowl server in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) format with milliseconds, for example: "2021-12-14T07:03:03.994Z"
 
 - `slot` is a [Solana's slot](https://docs.solana.com/terminology#slot) number for which message has produced
 
-- `version` of Serum DEX program layout (DEX version)
+- `version` of Mango DEX program layout
 
 - `price` and `size` are provided as strings to preserve precision
 
 - `eventTimestamp` is a timestamp of event provided by DEX (with seconds precision) in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601), for example: "2021-12-14T07:03:03.000Z"
 
+<br/>
+
+#### `recent_trades`
+
+Up to 100 recent trades pushed immediately after successful subscription confirmation.
+
+- every trade in `trades` array has the same format as [`trade`](#trade) message
+- trades are ordered from oldest to newest
+
+```ts
+{
+  "type": "recent_trades",
+  "market": string,
+  "trades": Trade[],
+  "timestamp": string
+}
+```
+
+#### sample `recent_trades` message
+
+```json
+{
+  "type": "recent_trades",
+  "market": "SOL-PERP",
+  "timestamp": "2021-12-14T12:33:42.437Z",
+  "trades": [
+    {
+      "type": "trade",
+      "market": "SOL-PERP",
+      "timestamp": "2021-12-14T12:33:02.437Z",
+      "slot": 111490354,
+      "version": 1,
+      "id": "293690612397529782803247|296512964240807321150678",
+      "side": "sell",
+      "price": "160.73",
+      "size": "4.53",
+      "eventTimestamp": "2021-12-14T12:32:59.000Z"
+    },
+    {
+      "type": "trade",
+      "market": "SOL-PERP",
+      "timestamp": "2021-12-14T12:33:42.437Z",
+      "slot": 111490426,
+      "version": 1,
+      "id": "296476070752659925097329|296512964240807321150640",
+      "side": "sell",
+      "price": "160.73",
+      "size": "0.50",
+      "eventTimestamp": "2021-12-14T12:33:39.000Z"
+    }
+  ]
+}
+```
+
+<br/>
+
+#### `trade`
+
+Pushed real-time for each trade as it happens on a DEX (decoded from the `eventQueue` account).
+
+- `side` describes a liquidity taker side
+
+- `id` field is an unique id constructed by joining fill taker and fill maker order id
+
+- `eventTimestamp` is a timestamp of trade provided by DEX (with seconds precision) in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)
+
+```ts
+{
+  "type": "trade",
+  "market": string,
+  "timestamp": string,
+  "slot": number,
+  "version": number,
+  "id": string,
+  "side": "buy" | "sell",
+  "price": string,
+  "size": string,
+  "eventTimestamp": string
+}
+```
+
+#### sample `trade` message
+
+```json
+{
+  "type": "trade",
+  "market": "SOL-PERP",
+  "timestamp": "2021-12-14T12:35:34.309Z",
+  "slot": 111490613,
+  "version": 1,
+  "id": "296310050055996539132982|296346943544143935185875",
+  "side": "sell",
+  "price": "160.64",
+  "size": "0.50",
+  "eventTimestamp": "2021-12-14T12:35:29.000Z"
+}
+```
+
+<br/>
+
+### `quote`
+
+Pushed real-time for any change in best bid/ask price or size for a given market (decoded from the `bids` and `asks` accounts).
+
+- `bestAsk` and `bestBid` are tuples where first item is a price and second is a size of the best bid/ask level
+
+```ts
+{
+  "type": "quote",
+  "market": string,
+  "timestamp": string,
+  "slot": number,
+  "version": number,
+  "bestAsk": [price: string, size: string] | undefined,
+  "bestBid": [price: string, size: string] | undefined
+}
+```
+
+#### sample `quote` message
+
+```json
+{
+  "type": "quote",
+  "market": "SOL-PERP",
+  "timestamp": "2021-12-14T12:40:18.809Z",
+  "slot": 111491086,
+  "version": 1,
+  "bestAsk": ["160.63", "0.50"],
+  "bestBid": ["160.53", "0.50"]
+}
+```
+
+<br/>
+
+### `l2snapshot`
+
+Entire up-to-date order book snapshot with orders aggregated by price level pushed immediately after successful subscription confirmation.
+
+- `asks` and `bids` arrays contain tuples where first item of a tuple is a price level and second one is a size of the resting orders at that price level
+
+- it can be pushed for an active connection as well when underlying server connection to the RPC node has been restarted, in such scenario locally maintained order book should be re-initialized with a new snapshot
+
+- together with [`l2update`](#l2update) messages it can be used to maintain local up-to-date full order book state
+
+```ts
+{
+  "type": "l2snapshot",
+  "market": string,
+  "timestamp": string,
+  "slot": number,
+  "version": number,
+  "asks": [price: string, size: string][],
+  "bids": [price: string, size: string][]
+}
+```
+
+#### sample `l2snapshot` message
+
+```json
+{
+  "type": "l2snapshot",
+  "market": "SOL-PERP",
+  "timestamp": "2021-12-14T12:41:38.369Z",
+  "slot": 111491223,
+  "version": 1,
+  "asks": [
+    ["160.63", "0.50"],
+    ["160.68", "101.27"]
+  ],
+  "bids": [
+    ["160.53", "0.50"],
+    ["160.47", "2.00"],
+    ["160.45", "1828.47"]
+  ]
+}
+```
+
+<br/>
+
+### `l2update`
+
+Pushed real-time for any change to the order book for a given market with updated price levels and sizes since the previous update (decoded from the `bids` and `asks` accounts).
+
+- together with [`l2snapshot`](#l2snapshot), `l2update` messages can be used to maintain local up-to-date full order book state
+
+- `asks` and `bids` arrays contain updates which are provided as a tuples where first item is an updated price level and second one is an updated size of the resting orders at that price level (absolute value, not delta)
+
+- if size is set to `0` it means that such price level does not exist anymore and shall be removed from locally maintained order book
+
+```ts
+{
+  "type": "l2update",
+  "market": string,
+  "timestamp": string,
+  "slot": number,
+  "version": number,
+  "asks": [price: string, size: string][],
+  "bids": [price: string, size: string][]
+}
+```
+
+#### sample `l2update` message
+
+```json
+{
+  "type": "l2update",
+  "market": "SOL-PERP",
+  "timestamp": "2021-12-14T12:43:03.993Z",
+  "slot": 111491367,
+  "version": 1,
+  "asks": [["160.63", "0.50"]],
+  "bids": []
+}
+```
+
+<br/>
+
+### `l3snapshot`
+
+Entire up-to-date order book snapshot with **all individual orders** pushed immediately after successful subscription confirmation.
+
+- `clientId` is an client provided order id for an order
+
+- `account` is an open orders account address
+
+- `accountSlot` is a an open orders account slot number
+
+- `eventTimestamp` is a timestamp when order was added to the order book, provided by DEX (with seconds precision) in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)
+
+- together with [`open`](#open), [`change`](#change), [`fill`](#fill) and [`done`](#done) messages it can be used to maintain local up to date Level 3 order book state
+
+- it can be pushed for an active connection as well when underlying server connection to the RPC node has been restarted, in such scenario locally maintained L3 order book should be re-initialized with a new snapshot
+
+```ts
+{
+  "type": "l3snapshot",
+  "market": string,
+  "timestamp": string,
+  "slot": number,
+  "version": number,
+  "asks": {
+    "price": string,
+    "size": string,
+    "side": "sell",
+    "orderId": string,
+    "clientId": string,
+    "account": string,
+    "accountSlot": number,
+    "eventTimestamp": string
+  }[],
+  "bids": {
+    "price": string,
+    "size": string,
+    "side": "buy",
+    "orderId": string,
+    "clientId": string,
+    "account": string,
+    "accountSlot": number,
+    "eventTimestamp": string
+  }[]
+}
+```
+
+#### sample `l3snapshot` message
+
+```json
+{
+  "type": "l3snapshot",
+  "market": "SOL-PERP",
+  "timestamp": "2021-12-14T12:46:40.670Z",
+  "slot": 111491726,
+  "version": 1,
+  "asks": [
+    {
+      "orderId": "295645967269342995275767",
+      "clientId": "1639485991672",
+      "side": "sell",
+      "price": "160.27",
+      "size": "101.53",
+      "account": "7xfGLkYwMBFbQ6iLTVMqmDrsU4CkaLHWuNLmdLTPmAtv",
+      "accountSlot": 3,
+      "eventTimestamp": "2021-12-14T12:46:34.000Z"
+    },
+    {
+      "orderId": "295664414013416704827395",
+      "clientId": "1639485996363",
+      "side": "sell",
+      "price": "160.28",
+      "size": "0.09",
+      "account": "B8CcUApFnKCWC49zy8u6YjCSFBKaATxQytegNSyQnoAn",
+      "accountSlot": 11,
+      "eventTimestamp": "2021-12-14T12:46:38.000Z"
+    }
+  ],
+  "bids": [
+    {
+      "orderId": "295277032387868781191181",
+      "clientId": "3411370557685501304",
+      "side": "buy",
+      "price": "160.06",
+      "size": "8.06",
+      "account": "DAcKCh6VB2faJ8HRXXygr6fsCNRLB6JqzjmVmCJnGkx5",
+      "accountSlot": 0,
+      "eventTimestamp": "2021-12-14T12:46:29.000Z"
+    }
+  ]
+}
+```
+
+### `open`
+
+Pushed real-time for every new order opened on the limit order book (decoded from the `bids` and `asks` accounts).
+
+- `eventTimestamp` is a timestamp when order was added to the order book, provided by DEX (with seconds precision) in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)
+
+- **no** `open` messages are pushed for order that are filled or canceled immediately, for example - `ImmediateOrCancel` orders
+
+```ts
+{
+  "type": "open",
+  "market": string,
+  "timestamp": string,
+  "slot": number,
+  "version": number,
+  "orderId": string,
+  "clientId": string,
+  "side": "buy" | "sell",
+  "price": string,
+  "size": string,
+  "account": string,
+  "accountSlot": number,
+  "eventTimestamp": string
+}
+```
+
+#### sample `open` message
+
+```json
+{
+  "type": "open",
+  "market": "SOL-PERP",
+  "timestamp": "2021-12-14T12:48:55.039Z",
+  "slot": 111491934,
+  "version": 1,
+  "orderId": "295147905179352837382395",
+  "clientId": "1639486128126",
+  "side": "sell",
+  "price": "160.00",
+  "size": "401.00",
+  "account": "8o2itcoSF7AfmhotNo7KjHaMSfUqHitJAr3wRnh9DkpF",
+  "accountSlot": 0,
+  "eventTimestamp": "2021-12-14T12:48:49.000Z"
+}
+```
+
+<br/>
+
+### `change`
+
+Pushed real-time anytime order size changes as a result of self-trade prevention (decoded from the `bids` and `asks` accounts).
+
+- `size` field contains updated order size
+
+```ts
+{
+  "type": "change",
+  "market": string,
+  "timestamp": string,
+  "slot": number,
+  "version": number,
+  "orderId": string,
+  "clientId": string,
+  "side": "buy" | "sell",
+  "price": string,
+  "size": string,
+  "account": string,
+  "accountSlot": number
+}
+```
+
+#### sample `change` message
+
+```json
+{
+  "type": "change",
+  "market": "SOL-PERP",
+  "timestamp": "2021-12-14T12:49:00.359Z",
+  "slot": 111491944,
+  "version": 1,
+  "orderId": "293487698212718954684144",
+  "clientId": "1639486135724",
+  "side": "buy",
+  "price": "159.09",
+  "size": "102.06",
+  "account": "7xfGLkYwMBFbQ6iLTVMqmDrsU4CkaLHWuNLmdLTPmAtv",
+  "accountSlot": 0
+}
+```
+
+<br/>
+
+### `fill`
+
+Pushed real-time anytime trade happens (decoded from the `eventQueue` accounts).
+
+- there are always two `fill` messages for a trade, one for a maker and one for a taker order
+
+- `eventTimestamp` is a timestamp of fill provided by DEX (with seconds precision) in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)
+
+- `feeCost` is provided in a quote currency
+
+```ts
+{
+  "type": "fill",
+  "market": string,
+  "timestamp": string,
+  "slot": number,
+  "version": number,
+  "orderId": string,
+  "clientId": string,
+  "side": "buy" | "sell",
+  "price": string,
+  "size": string,
+  "maker" boolean,
+  "feeCost" number,
+  "account": string,
+  "accountSlot": number,
+  "eventTimestamp": string
+}
+```
+
+#### sample `fill` message
+
+```json
+{
+  "type": "fill",
+  "market": "SOL-PERP",
+  "timestamp": "2021-12-14T12:49:05.442Z",
+  "slot": 111491953,
+  "version": 1,
+  "orderId": "294594502857141527781101",
+  "clientId": "1639486138455",
+  "side": "buy",
+  "price": "159.69",
+  "size": "0.50",
+  "maker": true,
+  "feeCost": -0.03193799999992557,
+  "account": "FowB2BtTty6MrBbY5ecAFVqiyJ6iLWVPsB58VrLjqW1Z",
+  "accountSlot": 0,
+  "eventTimestamp": "2021-12-14T12:49:02.000Z"
+}
+```
+
+<br/>
+
+### `done`
+
+Pushed real-time when the order is no longer on the order book (decoded from the `eventQueue` accounts).
+
+- this message can result from an order being canceled or filled (`reason` field)
+
+- there will be no more messages for this `orderId` after a `done` message
+
+- it can be pushed for orders that were never `open` in the order book in the first place (`ImmediateOrCancel` orders for example)
+
+- `sizeRemaining` field is available only for canceled orders (`reason="canceled"`)
+
+```ts
+{
+  "type": "done",
+  "market": string,
+  "timestamp": string,
+  "slot": number,
+  "version": number,
+  "orderId": string,
+  "clientId": string,
+  "side": "buy" | "sell",
+  "reason" : "canceled" | "filled",
+  "sizeRemaining": string | undefined
+  "account": string,
+  "accountSlot": number
+}
+```
+
+### sample `done` message
+
+```json
+{
+  "type": "done",
+  "market": "SOL-PERP",
+  "timestamp": "2021-12-14T12:49:09.928Z",
+  "slot": 111491960,
+  "version": 1,
+  "orderId": "294760523553804936798483",
+  "clientId": "1639486138456",
+  "side": "sell",
+  "reason": "canceled",
+  "account": "FowB2BtTty6MrBbY5ecAFVqiyJ6iLWVPsB58VrLjqW1Z",
+  "accountSlot": 1,
+  "sizeRemaining": "0.50"
+}
+```
+
+###
+
+<br/>
+<br/>
+
+## HTTP API
+
+### GET `/markets`
+
+Returns Mango DEX markets list supported by mango-bowl instance.
+
+<br/>
+
+### Endpoint URL
+
+- [http://localhost:8010/v1/markets](http://localhost:8000/v1/markets) - assuming mango-bowl runs locally on default port without SSL enabled
+
+- [https://api.mango-bowl.com/v1/markets](https://api.mango-bowl.com/v1/markets) - demo mango-bowl server endpoint
+
+<br/>
+
+### Response format
+
+```ts
+{
+  "name": string,
+  "baseCurrency": string,
+  "quoteCurrency": string,
+  "version": number,
+  "address": string,
+  "programId": string,
+  "tickSize": number,
+  "minOrderSize": number,
+  "takerFee": string,
+  "makerFee": string,
+  "liquidationFee": string
+}[]
+```
+
+#### sample response
+
+```json
+[
+  {
+    "name": "SOL-PERP",
+    "baseCurrency": "SOL",
+    "quoteCurrency": "USDC",
+    "version": 1,
+    "address": "2TgaaVoHgnSeEtXvWTx13zQeTf4hYWAMEiMQdcG6EwHi",
+    "programId": "mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68",
+    "tickSize": 0.01,
+    "minOrderSize": 0.01,
+    "takerFee": "0.00050",
+    "makerFee": "-0.00040",
+    "liquidationFee": "0.02500"
+  }
+]
+```
+
+<br/>
 <br/>

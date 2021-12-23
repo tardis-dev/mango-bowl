@@ -443,8 +443,16 @@ class AccountsChangeNotifications {
   private _subscribeToAccountsNotifications(ws: WebSocket) {
     for (const meta of this._accountsMeta) {
       if (ws.readyState !== ws.OPEN) {
-        throw new Error('_subscribeToAccountsNotifications WS closed')
+        logger.log('warn', 'Failed to subscribe to accounts notifications', {
+          market: this._options.marketName,
+          wsState: ws.readyState
+        })
+
+        ws.close(1000, 'Failed to subscribe to accounts notification')
+
+        return
       }
+
       this._sendMessage(ws, {
         jsonrpc: '2.0',
         id: meta.reqId,
@@ -625,9 +633,11 @@ class AccountsChangeNotifications {
       // event for the same slot, just update the data for account
       if (slot === this._currentSlot) {
         if (this._accountsData[accountName] !== undefined) {
-          throw new Error(
-            `Received second update for ${accountName} account for slot ${slot}, market ${this._options.marketName}`
-          )
+          logger.log('warn', `Received second update for ${accountName} account for the same slot`, {
+            slot,
+            market: this._options.marketName,
+            accountName
+          })
         }
         this._accountsData[accountName] = accountData
 

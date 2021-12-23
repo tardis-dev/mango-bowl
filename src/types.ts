@@ -58,6 +58,8 @@ export interface Trade extends DataMessage, WithEventTimestamp {
   readonly size: string
   readonly side: 'buy' | 'sell' // liquidity taker side
   readonly id: string
+  readonly takerAccount: string
+  readonly makerAccount: string
 }
 
 export interface Fill extends DataMessage, OrderItem {

@@ -369,21 +369,33 @@ export class DataMapper {
 
         // detect l2 trades based on fills
         if (message.type === 'fill' && message.maker === false) {
-          // this is rather fragile way of finding matching fill, can it be done better?
+          let matchingMakerFill
 
-          const matchingMakerFill =
-            l3Diff[i - 1] !== undefined && l3Diff[i - 1]!.type === 'fill'
-              ? (l3Diff[i - 1] as Fill)
-              : l3Diff[i - 2] !== undefined && l3Diff[i - 2]!.type === 'fill'
-              ? (l3Diff[i - 2] as Fill)
-              : undefined
+          for (let j = i - 1; j >= 0; j--) {
+            const potentialFillMessage = l3Diff[j]!
 
-          const makerFillOrderId =
-            matchingMakerFill !== undefined &&
-            matchingMakerFill.maker === true &&
-            matchingMakerFill.size === message.size
-              ? matchingMakerFill.orderId
-              : '_'
+            if (
+              potentialFillMessage.type === 'fill' &&
+              potentialFillMessage.maker === true &&
+              potentialFillMessage.size === message.size
+            ) {
+              matchingMakerFill = potentialFillMessage
+              break
+            }
+          }
+
+          const makerFillOrderId = matchingMakerFill !== undefined ? matchingMakerFill.orderId : undefined
+
+          const makerFillAccount = matchingMakerFill !== undefined ? matchingMakerFill.account : undefined
+
+          if (makerFillOrderId === undefined) {
+            logger.log('warn', 'Trade without matching maker fill order', {
+              market: this._options.symbol,
+              slot,
+              fill: message,
+              l3Diff
+            })
+          }
 
           const tradeId = `${message.orderId}|${makerFillOrderId}`
 
@@ -397,7 +409,9 @@ export class DataMapper {
             side: message.side,
             price: message.price,
             size: message.size,
-            eventTimestamp: message.eventTimestamp
+            eventTimestamp: message.eventTimestamp,
+            takerAccount: message.account,
+            makerAccount: makerFillAccount!
           }
 
           yield this._putInEnvelope(tradeMessage, true)

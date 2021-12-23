@@ -370,19 +370,9 @@ Up to 100 recent trades pushed immediately after successful subscription confirm
       "side": "sell",
       "price": "160.73",
       "size": "4.53",
-      "eventTimestamp": "2021-12-14T12:32:59.000Z"
-    },
-    {
-      "type": "trade",
-      "market": "SOL-PERP",
-      "timestamp": "2021-12-14T12:33:42.437Z",
-      "slot": 111490426,
-      "version": 1,
-      "id": "296476070752659925097329|296512964240807321150640",
-      "side": "sell",
-      "price": "160.73",
-      "size": "0.50",
-      "eventTimestamp": "2021-12-14T12:33:39.000Z"
+      "eventTimestamp": "2021-12-14T12:32:59.000Z",
+      "takerAccount": "AAddgLu9reZCUWW1bNQFaXrCMAtwQpMRvmeusgk4pCM6",
+      "makerAccount": "EpAdzaqV13Es3x4dukfjFoCrKVXnZ7y9Y76whgMHo5qx"
     }
   ]
 }
@@ -400,6 +390,8 @@ Pushed real-time for each trade as it happens on a DEX (decoded from the `eventQ
 
 - `eventTimestamp` is a timestamp of trade provided by DEX (with seconds precision) in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)
 
+- `takerAccount` and `makerAccount` fields provide info regarding maker and taker open account addresses that constitute the trade
+
 ```ts
 {
   "type": "trade",
@@ -412,6 +404,8 @@ Pushed real-time for each trade as it happens on a DEX (decoded from the `eventQ
   "price": string,
   "size": string,
   "eventTimestamp": string
+  "takerAccount": string
+  "makerAccount": string
 }
 ```
 
@@ -428,7 +422,9 @@ Pushed real-time for each trade as it happens on a DEX (decoded from the `eventQ
   "side": "sell",
   "price": "160.64",
   "size": "0.50",
-  "eventTimestamp": "2021-12-14T12:35:29.000Z"
+  "eventTimestamp": "2021-12-14T12:35:29.000Z",
+  "takerAccount": "AAddgLu9reZCUWW1bNQFaXrCMAtwQpMRvmeusgk4pCM6",
+  "makerAccount": "EpAdzaqV13Es3x4dukfjFoCrKVXnZ7y9Y76whgMHo5qx"
 }
 ```
 

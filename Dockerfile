@@ -1,9 +1,8 @@
-from node:16-alpine
+from node:16-slim
 # version arg contains current git tag
 ARG VERSION_ARG
 # install git
-RUN apk update
-RUN apk add --no-cache git
+RUN apt-get update && apt-get install -y git
 
 # install mango-bowl globally (exposes mango-bowl command)
 RUN npm install --global --unsafe-perm mango-bowl@$VERSION_ARG

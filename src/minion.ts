@@ -242,11 +242,18 @@ class Minion {
         const message = `Too many requests, slow down. Current limit: ${this.MAX_MESSAGES_PER_SECOND} messages per second.`
         logger.log('info', message, meta)
 
+        logger.log('info', message, {
+          clientIP: ws.getRemoteAddressAsText(),
+          ...meta
+        })
+
         const errorMessage: ErrorResponse = {
           type: 'error',
           message,
           timestamp: new Date().toISOString()
         }
+
+        await wait(3000)
 
         await this._send(ws, () => JSON.stringify(errorMessage))
 

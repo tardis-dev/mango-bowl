@@ -112,7 +112,6 @@ export async function executeAndRetry<T>(
 }
 
 export function getPerpMarkets(groupName: string): MangoPerpMarketInfo[] {
-  Config.ids().cluster_urls['mainnet']
   const mangoGroupConfig = Config.ids().groups.filter((group) => group.name === groupName)[0]!
 
   if (mangoGroupConfig === undefined || mangoGroupConfig.perpMarkets.length === 0) {

@@ -107,27 +107,30 @@ export class DataMapper {
       const doneMessages: Done[] = []
       for (const event of this._getNewlyAddedEvents(accountsData.eventQueue)) {
         for (const item of this._mapEventToDataMessages(event, timestamp, slot)!) {
-          if (item.type === 'fill' && item.maker === true) {
-            // for maker fills check first if there's existing open order for it
+          if (item.type === 'fill') {
+            // for fills check first if there's existing open order for it
             // as it may not exist in scenario where order was added to the order book and matched in the same slot
 
-            const makerFill: Fill = item
+            const fillOrderWithoutOpenOrder: Fill = item
 
-            const currentOpenOrders = makerFill.side === 'buy' ? newBidsOrders! : newAsksOrders!
-            const lastOpenOrders = makerFill.side === 'buy' ? this._bidsAccountOrders! : this._asksAccountOrders!
+            const currentOpenOrders = fillOrderWithoutOpenOrder.side === 'buy' ? newBidsOrders! : newAsksOrders!
+            const lastOpenOrders =
+              fillOrderWithoutOpenOrder.side === 'buy' ? this._bidsAccountOrders! : this._asksAccountOrders!
 
             const hasMatchingOpenOrder =
-              currentOpenOrders.some((o) => o.orderId === makerFill.orderId) ||
-              lastOpenOrders.some((o) => o.orderId === makerFill.orderId)
+              currentOpenOrders.some((o) => o.orderId === fillOrderWithoutOpenOrder.orderId) ||
+              lastOpenOrders.some((o) => o.orderId === fillOrderWithoutOpenOrder.orderId)
 
             if (hasMatchingOpenOrder === false) {
-              const matchingOpenOrder = l3Diff.find((l) => l.orderId === makerFill.orderId && l.type === 'open')
+              const matchingOpenOrder = l3Diff.find(
+                (l) => l.orderId === fillOrderWithoutOpenOrder.orderId && l.type === 'open'
+              )
 
               if (matchingOpenOrder !== undefined) {
                 // check if we've already added an open order to the l3Diff as single maker order that was
                 // matched in the same slot could be matched by multiple fills
                 ;(matchingOpenOrder as any).size = (
-                  Number(makerFill.size) + Number((matchingOpenOrder as any).size)
+                  Number(fillOrderWithoutOpenOrder.size) + Number((matchingOpenOrder as any).size)
                 ).toFixed(this._options.sizeDecimalPlaces)
               } else {
                 const openMessage: Open = {
@@ -136,14 +139,14 @@ export class DataMapper {
                   timestamp,
                   slot,
                   version: this._version,
-                  orderId: makerFill.orderId,
-                  clientId: makerFill.clientId,
-                  side: makerFill.side,
-                  price: makerFill.price,
-                  size: makerFill.size,
-                  account: makerFill.account,
-                  accountSlot: makerFill.accountSlot,
-                  eventTimestamp: makerFill.eventTimestamp
+                  orderId: fillOrderWithoutOpenOrder.orderId,
+                  clientId: fillOrderWithoutOpenOrder.clientId,
+                  side: fillOrderWithoutOpenOrder.side,
+                  price: fillOrderWithoutOpenOrder.price,
+                  size: fillOrderWithoutOpenOrder.size,
+                  account: fillOrderWithoutOpenOrder.account,
+                  accountSlot: fillOrderWithoutOpenOrder.accountSlot,
+                  eventTimestamp: fillOrderWithoutOpenOrder.eventTimestamp
                 }
 
                 l3Diff.push(openMessage)
@@ -154,12 +157,12 @@ export class DataMapper {
                   timestamp,
                   slot,
                   version: this._version,
-                  orderId: makerFill.orderId,
-                  clientId: makerFill.clientId,
-                  side: makerFill.side,
+                  orderId: fillOrderWithoutOpenOrder.orderId,
+                  clientId: fillOrderWithoutOpenOrder.clientId,
+                  side: fillOrderWithoutOpenOrder.side,
                   reason: 'filled',
-                  account: makerFill.account,
-                  accountSlot: makerFill.accountSlot,
+                  account: fillOrderWithoutOpenOrder.account,
+                  accountSlot: fillOrderWithoutOpenOrder.accountSlot,
                   sizeRemaining: undefined
                 }
 

@@ -414,7 +414,11 @@ export class DataMapper {
             size: message.size,
             eventTimestamp: message.eventTimestamp,
             takerAccount: message.account,
-            makerAccount: makerFillAccount!
+            makerAccount: makerFillAccount!,
+            takerOrderId: message.orderId,
+            makerOrderId: makerFillOrderId!,
+            takerClientId: message.clientId,
+            makerClientId: matchingMakerFill?.clientId!
           }
 
           yield this._putInEnvelope(tradeMessage, true)

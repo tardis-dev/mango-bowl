@@ -60,6 +60,10 @@ export interface Trade extends DataMessage, WithEventTimestamp {
   readonly id: string
   readonly takerAccount: string
   readonly makerAccount: string
+  readonly takerOrderId: string
+  readonly makerOrderId: string
+  readonly takerClientId: string
+  readonly makerClientId: string
 }
 
 export interface Fill extends DataMessage, OrderItem {

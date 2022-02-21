@@ -390,7 +390,7 @@ Pushed real-time for each trade as it happens on a DEX (decoded from the `eventQ
 
 - `eventTimestamp` is a timestamp of trade provided by DEX (with seconds precision) in [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)
 
-- `takerAccount` and `makerAccount` fields provide info regarding maker and taker open account addresses that constitute the trade
+- `taker*` and `maker*` fields provide info regarding maker and taker orders that constitute the trade
 
 ```ts
 {
@@ -406,6 +406,10 @@ Pushed real-time for each trade as it happens on a DEX (decoded from the `eventQ
   "eventTimestamp": string
   "takerAccount": string
   "makerAccount": string
+  "takerOrderId": string
+  "makerOrderId": string
+  "takerClientId": string
+  "makerClientId": string
 }
 ```
 
@@ -423,8 +427,12 @@ Pushed real-time for each trade as it happens on a DEX (decoded from the `eventQ
   "price": "160.64",
   "size": "0.50",
   "eventTimestamp": "2021-12-14T12:35:29.000Z",
-  "takerAccount": "AAddgLu9reZCUWW1bNQFaXrCMAtwQpMRvmeusgk4pCM6",
-  "makerAccount": "EpAdzaqV13Es3x4dukfjFoCrKVXnZ7y9Y76whgMHo5qx"
+  "takerAccount": "27YAdJWpEdMB4Pxk8EmkQ5PgDEiwwdxjQibcJy6jBNGS",
+  "makerAccount": "GR8wiP7NfHR8nihLjiADRoRM7V7aUvtTfUnkBy8Zkd5T",
+  "takerOrderId": "169580918269611952651370",
+  "makerOrderId": "173897456382859898438567",
+  "takerClientId": "864345997654345666",
+  "makerClientId": "7067091222090985486"
 }
 ```
 

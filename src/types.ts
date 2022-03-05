@@ -64,6 +64,8 @@ export interface Trade extends DataMessage, WithEventTimestamp {
   readonly makerOrderId: string
   readonly takerClientId: string
   readonly makerClientId: string
+  readonly takerFeeCost: number
+  readonly makerFeeCost: number
 }
 
 export interface Fill extends DataMessage, OrderItem {

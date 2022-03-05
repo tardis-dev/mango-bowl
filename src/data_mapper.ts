@@ -389,8 +389,6 @@ export class DataMapper {
 
           const makerFillOrderId = matchingMakerFill !== undefined ? matchingMakerFill.orderId : undefined
 
-          const makerFillAccount = matchingMakerFill !== undefined ? matchingMakerFill.account : undefined
-
           if (makerFillOrderId === undefined) {
             logger.log('warn', 'Trade without matching maker fill order', {
               market: this._options.symbol,
@@ -414,11 +412,13 @@ export class DataMapper {
             size: message.size,
             eventTimestamp: message.eventTimestamp,
             takerAccount: message.account,
-            makerAccount: makerFillAccount!,
+            makerAccount: matchingMakerFill?.account!,
             takerOrderId: message.orderId,
             makerOrderId: makerFillOrderId!,
             takerClientId: message.clientId,
-            makerClientId: matchingMakerFill?.clientId!
+            makerClientId: matchingMakerFill?.clientId!,
+            takerFeeCost: message.feeCost,
+            makerFeeCost: matchingMakerFill?.feeCost!
           }
 
           yield this._putInEnvelope(tradeMessage, true)

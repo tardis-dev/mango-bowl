@@ -6,7 +6,9 @@ import {
   PerpEventLayout,
   PerpEventQueueHeaderLayout,
   PerpMarket,
-  PerpOrder
+  PerpOrder,
+  U64_MAX_BN,
+  ZERO_BN
 } from '@blockworks-foundation/mango-client'
 import BN from 'bn.js'
 import { CircularBuffer } from './helpers'
@@ -146,7 +148,8 @@ export class DataMapper {
                   size: fillOrderWithoutOpenOrder.size,
                   account: fillOrderWithoutOpenOrder.account,
                   accountSlot: fillOrderWithoutOpenOrder.accountSlot,
-                  eventTimestamp: fillOrderWithoutOpenOrder.eventTimestamp
+                  eventTimestamp: fillOrderWithoutOpenOrder.eventTimestamp,
+                  expiryTimestamp: undefined
                 }
 
                 l3Diff.push(openMessage)
@@ -626,7 +629,8 @@ export class DataMapper {
           size: item.size,
           account: item.account,
           accountSlot: item.accountSlot,
-          eventTimestamp: item.eventTimestamp
+          eventTimestamp: item.eventTimestamp,
+          expiryTimestamp: item.expiryTimestamp
         })
       }
 
@@ -902,7 +906,7 @@ export class DataMapper {
   }
 
   private _mapToOrderMessage(
-    { orderId, clientId, side, price, account, accountSlot, eventTimestamp }: OrderItem,
+    { orderId, clientId, side, price, account, accountSlot, eventTimestamp, expiryTimestamp }: OrderItem,
     type: 'open' | 'change',
     size: string,
     timestamp: string,
@@ -922,7 +926,8 @@ export class DataMapper {
         size,
         account,
         accountSlot,
-        eventTimestamp
+        eventTimestamp,
+        expiryTimestamp
       }
     } else {
       return {
@@ -937,7 +942,8 @@ export class DataMapper {
         price,
         size,
         account,
-        accountSlot
+        accountSlot,
+        expiryTimestamp
       }
     }
   }
@@ -950,7 +956,8 @@ export class DataMapper {
     size,
     owner,
     openOrdersSlot,
-    timestamp
+    timestamp,
+    expiryTimestamp
   }: PerpOrder) => {
     const orderItem: OrderItem = {
       orderId: orderId.toString(),
@@ -960,7 +967,11 @@ export class DataMapper {
       size: size.toFixed(this._options.sizeDecimalPlaces),
       account: owner.toBase58(),
       accountSlot: openOrdersSlot,
-      eventTimestamp: new Date(timestamp.toNumber() * 1000).toISOString()
+      eventTimestamp: new Date(timestamp.toNumber() * 1000).toISOString(),
+      expiryTimestamp:
+        expiryTimestamp.eq(ZERO_BN) || expiryTimestamp.eq(U64_MAX_BN)
+          ? undefined
+          : new Date(expiryTimestamp.toNumber() * 1000).toISOString()
     }
 
     return orderItem

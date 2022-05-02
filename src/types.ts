@@ -68,7 +68,7 @@ export interface Trade extends DataMessage, WithEventTimestamp {
   readonly makerFeeCost: number
 }
 
-export interface Fill extends DataMessage, OrderItem {
+export interface Fill extends DataMessage, Omit<OrderItem, 'expiryTimestamp'> {
   readonly type: 'fill'
   readonly maker: boolean
   readonly feeCost: number
@@ -82,6 +82,7 @@ export type OrderItem = {
   readonly clientId: string
   readonly account: string
   readonly accountSlot: number
+  readonly expiryTimestamp: string | undefined
 } & WithEventTimestamp
 
 export interface Open extends DataMessage, OrderItem {

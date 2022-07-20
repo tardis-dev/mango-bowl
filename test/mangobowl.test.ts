@@ -21,7 +21,7 @@ async function fetchMarkets() {
   return (await response.json()) as MangoMarketListItem[]
 }
 
-describe('mango-bowl', () => {
+describe.skip('mango-bowl', () => {
   beforeAll(async () => {
     await bootServer({
       port: PORT,
